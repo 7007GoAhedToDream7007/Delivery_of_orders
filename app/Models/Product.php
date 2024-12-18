@@ -26,6 +26,8 @@ class Product extends Model
     public function favorites(){
         return $this->HasMany(Favorite::class);
     }
-
+    public function orderItems() { 
+        return $this->hasMany(OrderItem::class); 
+    }
 
 }

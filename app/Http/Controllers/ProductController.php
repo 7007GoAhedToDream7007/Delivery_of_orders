@@ -74,6 +74,12 @@ class ProductController extends Controller
         return $this->apiResponse($product,'created new product successfully',201);
     }
 
-
+    
+    public function getOneProduct($id){
+        $product = Product::find($id);
+        if(!$product)
+            return $this->apiResponse(null,'product not found',404);
+        return $this->apiResponse(new ProductResource($product) ,'get product successfully',201);
+    }
 
 }

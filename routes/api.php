@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\OrderController;
 use App\Http\Middleware\CheckAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,23 @@ Route::middleware(\App\Http\Middleware\JwtMiddleware::class)->group(function () 
 
     Route::post('delete_favorite' , [FavoriteController::class,'deleteFavorite']);
 
+    Route::post('get_one_product/{id}' , [ProductController::class,'getOneProduct']);
+    
+    Route::get('get_all_orders' , [OrderController::class,'getAllOrders']);
+    
+    Route::post('get_order_details/{id}' , [OrderController::class,'getOrderDetails']);
+    
+    Route::post('add_order_item',[OrderController::class,'addOrderItem']);
+    
+    Route::post('update_order_item',[OrderController::class,'updateOrderItem']);
+    
+    Route::post('delete_order_item',[OrderController::class,'deleteOrderItem']);
+    
+    Route::post('change_order_status/{id}' , [OrderController::class,'changeOrderStatus'])->middleware(CheckAdmin::class);
+    
+    Route::post('update_order' , [OrderController::class,'updateOrder']);
+    
+    Route::post('delete_order' , [OrderController::class,'deleteOrder']);
 });
 
 
