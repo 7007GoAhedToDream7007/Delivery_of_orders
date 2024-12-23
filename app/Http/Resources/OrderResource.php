@@ -14,6 +14,15 @@ class OrderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        if($request->is('api/get_all_orders')){
+            return[
+                'user_id' => $this->user_id,
+                'status' => $this->status,
+                'total_price' => $this->total_price,
+                'address' => $this->address,
+            ];
+        }
+
         return[
             'status' => $this->status,
             'total_price' => $this->total_price,

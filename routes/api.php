@@ -53,7 +53,9 @@ Route::middleware(\App\Http\Middleware\JwtMiddleware::class)->group(function () 
 
     Route::post('get_one_product/{id}' , [ProductController::class,'getOneProduct']);
     
-    Route::get('get_all_orders' , [OrderController::class,'getAllOrders']);
+    Route::get('get_all_orders' , [OrderController::class,'getAllOrders'])->middleware(CheckAdmin::class);
+
+    Route::get('get_all_user_orders' , [OrderController::class,'getAllUserOrders']);
     
     Route::post('get_order_details/{id}' , [OrderController::class,'getOrderDetails']);
     
@@ -68,6 +70,8 @@ Route::middleware(\App\Http\Middleware\JwtMiddleware::class)->group(function () 
     Route::post('update_order' , [OrderController::class,'updateOrder']);
     
     Route::post('delete_order' , [OrderController::class,'deleteOrder']);
+
+    Route::post('create_order' , [OrderController::class,'createOrder']);
 });
 
 

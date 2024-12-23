@@ -15,8 +15,13 @@ class OrderController extends Controller
 {
     use apiResponse;
     public function getAllOrders(){
+        $orders = OrderResource::collection(Order::all());
+        return $this->apiResponse($orders, 'get all orders successfully', 200);
+    }
+
+    public function getAllUserOrders(){
         $orders = OrderResource::collection(Order::where('user_id', auth()->user()->id)->get());
-        return $this->apiResponse($orders,'get all orders successfully',200);
+        return $this->apiResponse($orders,'get all user orders successfully',200);
     }
 
     public function getOrderDetails($id){
@@ -35,64 +40,61 @@ class OrderController extends Controller
 
         return $this->apiResponse($order_details , 'get order successfully',200);
     }
-
-    public function addOrderItem(Request $request){
-
+    
+    public function createOrder(Request $request) {
         $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'products' => 'required|array', 
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
         if ($validator->fails()) {
             return $this->apiResponse(null, $validator->errors(), 400);
         }
 
-        $product = Product::find($request->product_id);
+        $new_order = Order::create([
+            'user_id' => auth()->user()->id,
+            'status' => 'pending',
+            'total_price' => 0,
+            'address' => auth()->user()->location,
+        ]);
 
-        if ($product->available_quantity < $request->quantity) {
-            return $this->apiResponse(null, 'Not enough quantity', 400);
-        }
+        $total_price = 0;
 
-        $last_order = Order::where('user_id', auth()->user()->id)->orderBy('id', 'desc')->first();
+        foreach ($request->products as $product_data) {
+            $product = Product::find($product_data['product_id']);
 
-        
-        if (!$last_order || $last_order->status !== 'pending') {
-            $current_order = Order::create([
-                'user_id' => auth()->user()->id,
-                'status' => 'pending',  
-                'total_price' => 0,
-                'address' => $request->address, 
+            if ($product->available_quantity < $product_data['quantity']) {
+                return $this->apiResponse(null, "Not enough quantity of product ID {$product_data['product_id']}", 400);
+            }
+
+            $order_item = OrderItem::create([
+                'order_id' => $new_order->id,
+                'product_id' => $product_data['product_id'],
+                'quantity' => $product_data['quantity'],
+                'price' => $product->price * $product_data['quantity'],
             ]);
-        } else {
-            $current_order = $last_order;
-        }
-        
-        $old_order_item = OrderItem::where('order_id', $current_order->id)
-            ->where('product_id', $request->product_id)
-            ->first();
-        
-        if(!$old_order_item){
-            
-            $new_order_item = OrderItem::create([
-                'order_id' => $current_order->id, 
-                'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
-                'price' => $product->price * $request->quantity,
-            ]);
-
-            $product->available_quantity -= $request->quantity;
+ 
+            $product->available_quantity -= $product_data['quantity'];
             $product->save();
 
-            $current_order->total_price += $product->price * $request->quantity;
-            $current_order->save();
-
-            return $this->apiResponse(new OrderItemResource($new_order_item), 'Item added to order successfully', 201);
+            $total_price += $product->price * $product_data['quantity'];
         }
 
-        return $this->apiResponse(null, 'Item already exist', 200);
+        $new_order->total_price += $total_price;
+        $new_order->save();
 
+        $order_details = [
+            'Order id'=>$new_order->id,
+            'order items'=> OrderItemResource::collection($new_order->orderItems),
+            'total price'=> $new_order->total_price,
+            'status' => $new_order->status,
+            'address' => $new_order->address,
+        ];
+
+        return $this->apiResponse($order_details, 'Order created successfully', 201);
     }
-    
+
     public function updateOrderItem(Request $request){
 
         $validator = Validator::make($request->all(), [
