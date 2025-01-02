@@ -58,9 +58,7 @@ Route::middleware(\App\Http\Middleware\JwtMiddleware::class)->group(function () 
     Route::get('get_all_user_orders' , [OrderController::class,'getAllUserOrders']);
     
     Route::post('get_order_details/{id}' , [OrderController::class,'getOrderDetails']);
-    
-    Route::post('add_order_item',[OrderController::class,'addOrderItem']);
-    
+        
     Route::post('update_order_item',[OrderController::class,'updateOrderItem']);
     
     Route::post('delete_order_item',[OrderController::class,'deleteOrderItem']);
